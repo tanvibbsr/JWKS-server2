@@ -1,13 +1,11 @@
-# app.py
 from flask import Flask, request, jsonify
 import sqlite3
 import time
 import base64
-
 from cryptography.hazmat.primitives import serialization
 import jwt
+from database import DB_FILE 
 
-DB_FILE = "totally_not_my_privateKeys.db"
 app = Flask(__name__)
 
 # -----------------------------
@@ -57,9 +55,9 @@ def pem_to_jwk(kid, pem):
     }
 
 # -----------------------------
-# POST /auth
+# POST /auth (also allow GET for browser testing)
 # -----------------------------
-@app.route("/auth", methods=["POST"])
+@app.route("/auth", methods=["POST", "GET"])
 def auth():
     expired = "expired" in request.args
     row = get_key(expired)
@@ -67,14 +65,12 @@ def auth():
         return jsonify({"error": "No key found"}), 500
 
     kid, pem = row
-
     token = jwt.encode(
         {"user": "userABC", "exp": int(time.time()) + 300},
         pem,
         algorithm="RS256",
         headers={"kid": str(kid)}
     )
-
     return jsonify({"token": token})
 
 # -----------------------------
@@ -85,6 +81,13 @@ def jwks():
     rows = get_valid_keys()
     keys = [pem_to_jwk(kid, pem) for kid, pem in rows]
     return jsonify({"keys": keys})
+
+# -----------------------------
+# Home page
+# -----------------------------
+@app.route("/", methods=["GET"])
+def home():
+    return "<h2>JWKS Server is running. Use /auth or /.well-known/jwks.json</h2>"
 
 # -----------------------------
 # Run server
