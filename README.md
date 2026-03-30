@@ -34,3 +34,9 @@ POST /auth
 
 GET /.well-known/jwks.json
 - Returns all non-expired public keys in JWKS format.
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+Test Coverage(>80%):
+- pytest --cov=app test_app.py
+ 
